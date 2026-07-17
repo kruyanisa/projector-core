@@ -5,31 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Screen</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { font-family: 'Sarabun'; background: #0f172a; color: white; text-align: center; padding: 20px; }
-        .box { background: #1e293b; padding: 20px; border-radius: 16px; border: 2px solid #334155; max-width: 800px; margin: auto; }
-        .btn { padding: 12px 25px; font-size: 18px; font-weight: bold; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; }
-        .btn-kick { background: #ef4444; font-size: 14px; padding: 5px 10px; margin-left: 10px; }
+        .box { background: #1e293b; padding: 30px; border-radius: 16px; border: 2px solid #334155; max-width: 800px; margin: auto; }
+        .btn { padding: 15px 25px; font-size: 18px; font-weight: bold; background: #10b981; color: white; border: none; border-radius: 10px; cursor: pointer; margin: 10px; }
+        .btn-single { background: #ec4899; text-decoration: none; display: inline-block; color: white; padding: 15px 25px; border-radius: 10px; font-weight: bold;}
+        .btn-team { background: #3b82f6; }
+        .btn-kick { background: #ef4444; font-size: 14px; padding: 5px 10px; margin-left: 10px; border: none; border-radius: 5px; color: white; cursor: pointer; }
         .pin-text { font-size: 80px; color: #fbbf24; font-weight: 800; letter-spacing: 5px; margin: 10px 0; }
-        .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .t-card { padding: 15px; border-radius: 12px; font-size: 20px; font-weight: bold; background: #334155; }
+        
+        /* Grid แบบปรับจำนวนคอลัมน์อัตโนมัติเพื่อความสวยงาม */
+        .team-grid { display: grid; grid-template-columns: repeat(var(--cols, 2), 1fr); gap: 15px; margin-top: 20px; }
+        .t-card { padding: 20px; border-radius: 12px; font-size: 22px; font-weight: bold; background: #334155; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        
         .timer { font-size: 60px; color: #ef4444; font-weight: bold; }
         .q-text { font-size: 50px; margin: 30px 0; color: #38bdf8; }
+        select { padding: 10px; font-size: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
     </style>
     <script src="https://kruyanisa.github.io/classroom-core/quiz-config.js"></script>
 </head>
 <body>
 
-<div id="setup" class="box">
-    <h1>สร้างห้องเรียน (Team Mode)</h1>
-    <button class="btn" onclick="createRoom()">🚀 กดเพื่อสร้างรหัสห้อง</button>
+<div id="main-menu" class="box">
+    <h1 style="color: #38bdf8;">🎮 English Classroom Game Portal</h1>
+    <p style="color: #94a3b8; margin-bottom: 30px;">กรุณาเลือกโหมดการเล่นที่ต้องการ</p>
+    <a href="ม.1 บทที่4-family.html" class="btn btn-single">👤 โหมดลุยเดี่ยว (ฟังเสียงเลือกตอบ)</a>
+    <button class="btn btn-team" onclick="goToSetup()">👥 โหมดทีม (Prepositions of Time)</button>
+</div>
+
+<div id="setup" class="box" style="display: none;">
+    <h1>ตั้งค่าโหมดทีม (Team Mode)</h1>
+    <p style="color: #94a3b8;">เลือกจำนวนทีมที่ต้องการแบ่งในห้องเรียน:</p>
+    <select id="team-count-select">
+        <option value="2">แบ่งเป็น 2 ทีม (Team A - B)</option>
+        <option value="3">แบ่งเป็น 3 ทีม (Team A - C)</option>
+        <option value="4" selected>แบ่งเป็น 4 ทีม (Team A - D)</option>
+    </select>
+    <br>
+    <button class="btn" onclick="createRoom()">🚀 สร้างรหัสห้องเรียน</button>
 </div>
 
 <div id="lobby" class="box" style="display: none;">
     <h2>ให้นักเรียนใส่รหัสห้องนี้เพื่อเข้าเกม</h2>
     <div class="pin-text" id="pin-display">----</div>
     <div class="team-grid" id="lobby-teams"></div>
-    <button class="btn" style="background:#3b82f6; margin-top:30px;" onclick="startGame()">▶ เริ่มเกม (ล็อกห้อง)</button>
+    <button class="btn btn-team" style="margin-top:30px;" onclick="startGame()">▶ เริ่มเกม (ล็อกห้อง)</button>
 </div>
 
 <div id="game" class="box" style="display: none;">
@@ -54,6 +75,11 @@
     let roomPIN = ""; let currentQ = 1; let gameState = null;
     let timer = 15; let tId = null; let polling = null;
 
+    function goToSetup() {
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('setup').style.display = 'block';
+    }
+
     async function api(payload) {
         let res = await fetch(QUIZ_CONFIG.SCRIPT_URL, { 
             method: 'POST', 
@@ -64,11 +90,19 @@
     }
 
     async function createRoom() {
-        let res = await api({ action: 'team_create_room' });
+        let tc = document.getElementById('team-count-select').value;
+        Swal.fire({ title: 'กำลังสร้างห้องเกม...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+        let res = await api({ action: 'team_create_room', teamCount: tc });
+        Swal.close();
+        
         roomPIN = res.pin; gameState = res.state;
         document.getElementById('setup').style.display = 'none';
         document.getElementById('lobby').style.display = 'block';
         document.getElementById('pin-display').innerText = roomPIN;
+        
+        // ปรับ CSS Grid คอลัมน์ตามจำนวนทีมให้สมดุลสวยงาม
+        document.documentElement.style.setProperty('--cols', gameState.teamCount == 3 ? '3' : '2');
+        
         polling = setInterval(sync, 1500);
     }
 
@@ -83,12 +117,13 @@
 
     function renderLobby() {
         let html = '';
-        ['A','B','C','D'].forEach(t => {
+        let targetTeams = ['A','B','C','D'].slice(0, gameState.teamCount);
+        targetTeams.forEach(t => {
             let name = gameState.teams[t];
             if(name) {
-                html += `<div class="t-card" style="background:#10b981;">Team ${t}: ${name} <button class="btn btn-kick" onclick="kick('${t}')">เตะออก</button></div>`;
+                html += `<div class="t-card" style="background:#10b981;">Team ${t}: ${name} <button class="btn btn-kick" onclick="kick('${t}')">เตะ</button></div>`;
             } else {
-                html += `<div class="t-card">Team ${t}: (ว่าง)</div>`;
+                html += `<div class="t-card" style="background:#475569; opacity:0.6;">Team ${t}: (ว่าง)</div>`;
             }
         });
         document.getElementById('lobby-teams').innerHTML = html;
@@ -117,12 +152,12 @@
     function renderGameTeams() {
         if(timer <= 0) return;
         let html = '';
-        ['A','B','C','D'].forEach(t => {
-            if(!gameState.teams[t]) return;
+        let targetTeams = ['A','B','C','D'].slice(0, gameState.teamCount);
+        targetTeams.forEach(t => {
             let ans = gameState.answers[t];
-            let status = ans ? '🔒 ล็อกแล้ว' : '⏳ คิดอยู่...';
-            let color = ans ? '#3b82f6' : '#475569';
-            html += `<div class="t-card" style="background:${color};">Team ${t} (${gameState.scores[t]} แต้ม)<br><small>${status}</small> <button class="btn btn-kick" onclick="kick('${t}')">เตะ</button></div>`;
+            let status = ans ? '🔒 ล็อกคำตอบแล้ว' : '⏳ กำลังคิด...';
+            let color = ans ? '#3b82f6' : '#334155';
+            html += `<div class="t-card" style="background:${color};">Team ${t} (${gameState.scores[t]} แต้ม)<br><span style="font-size:14px;font-weight:normal;">${status}</span></div>`;
         });
         document.getElementById('game-teams').innerHTML = html;
     }
@@ -132,13 +167,15 @@
         let correct = questions[currentQ].a;
         document.getElementById('q-text').innerHTML = `<span style="color:#10b981;">${questions[currentQ].q.replace('___', `[ ${correct} ]`)}</span>`;
         let addScores = {A:0, B:0, C:0, D:0};
-        ['A','B','C','D'].forEach(t => { if(gameState.answers[t] === correct) addScores[t] = 1; });
+        
+        let targetTeams = ['A','B','C','D'].slice(0, gameState.teamCount);
+        targetTeams.forEach(t => { if(gameState.answers[t] === correct) addScores[t] = 1; });
         await api({ action: 'team_update_system', pin: roomPIN, addScores: addScores });
+        
         let html = '';
-        ['A','B','C','D'].forEach(t => {
-            if(!gameState.teams[t]) return;
+        targetTeams.forEach(t => {
             let bg = gameState.answers[t] === correct ? '#10b981' : '#ef4444';
-            html += `<div class="t-card" style="background:${bg};">Team ${t} (${gameState.scores[t] + addScores[t]} แต้ม)<br>ตอบ: ${gameState.answers[t] || '-'}</div>`;
+            html += `<div class="t-card" style="background:${bg};">Team ${t} (${gameState.scores[t] + addScores[t]} แต้ม)<br><span style="font-size:16px;">ตอบ: ${gameState.answers[t] || 'ไม่ตอบ'}</span></div>`;
         });
         document.getElementById('game-teams').innerHTML = html;
         document.getElementById('next-btn').style.display = 'inline-block';
@@ -147,7 +184,7 @@
     async function nextQ() {
         currentQ++;
         if(currentQ > 13) {
-            document.getElementById('q-text').innerText = "🎉 จบเกม!";
+            document.getElementById('q-text').innerText = "🎉 จบเกมการแข่งขันโหมดทีม!";
             document.getElementById('next-btn').style.display = 'none';
         } else {
             await api({ action: 'team_update_system', pin: roomPIN, currentQ: currentQ, clearAnswers: true });
