@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Single Player - Prepositions of Time</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://kruyanisa.github.io/classroom-core/quiz-config.js"></script>
+    <style>
+        body { font-family: 'Sarabun'; background: #0f172a; color: white; display: flex; justify-content: center; margin: 0; padding: 20px 0; }
+        .container { width: 100%; max-width: 400px; padding: 0 20px; box-sizing: border-box; text-align: center; }
+        .box { background: #1e293b; padding: 30px; border-radius: 16px; border: 2px solid #334155; margin-bottom: 20px; }
+        input { width: 100%; padding: 15px; margin: 10px 0; font-size: 16px; border-radius: 8px; box-sizing: border-box; text-align: center; }
+        .btn { width: 100%; padding: 15px; font-size: 18px; font-weight: bold; background: #10b981; color: white; border: none; border-radius: 12px; cursor: pointer; }
+        .ans-btn { width: 100%; padding: 25px; font-size: 24px; font-weight: bold; margin: 10px 0; border: none; border-radius: 12px; color: white; cursor: pointer; }
+        .q-text { font-size: 30px; margin: 20px 0; color: #38bdf8; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="login" class="box">
+        <h2 style="color: #ec4899;">👤 เล่นเดี่ยว</h2>
+        <p style="color: #94a3b8; font-size: 14px;">Prepositions of Time (13 ข้อ)</p>
+        <input type="text" id="name" placeholder="ชื่อ - นามสกุล">
+        <input type="text" id="room" placeholder="ชั้น/ห้อง (เช่น 1/1)">
+        <input type="text" id="stdId" placeholder="รหัสนักเรียน (5 หลัก)" maxlength="5">
+        <button class="btn" style="margin-top:15px;" onclick="startGame()">เริ่มทำแบบทดสอบ</button>
+    </div>
+
+    <div id="game" class="box" style="display: none;">
+        <div style="color: #94a3b8; font-weight: bold;" id="progress">ข้อ 1 / 13</div>
+        <div class="q-text" id="q-text"></div>
+        <button class="ans-btn" style="background:#06b6d4;" onclick="checkAnswer('in')">IN</button>
+        <button class="ans-btn" style="background:#ec4899;" onclick="checkAnswer('on')">ON</button>
+        <button class="ans-btn" style="background:#f97316;" onclick="checkAnswer('at')">AT</button>
+    </div>
+
+    <div id="result" class="box" style="display: none;">
+        <h2>🎉 ทำสำเร็จ!</h2>
+        <p>คะแนนของคุณคือ</p>
+        <div style="font-size: 50px; color: #10b981; font-weight: 800; margin: 10px 0;" id="score-text">0 / 13</div>
+        <div id="save-status" style="color: #f59e0b; margin-top: 15px; font-weight: bold;">⏳ กำลังบันทึกคะแนน...</div>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {}, {q: "___ Friday afternoon", a: "on"}, {q: "___ the summer", a: "in"}, {q: "___ the morning", a: "in"}, {q: "___ Tuesday", a: "on"}, {q: "___ the afternoon", a: "in"}, {q: "___ midnight", a: "at"}, {q: "___ 3 o'clock", a: "at"}, {q: "___ night", a: "at"}, {q: "___ midday", a: "at"}, {q: "___ the evening", a: "in"}, {q: "___ November", a: "in"}, {q: "___ noon", a: "at"}, {q: "___ 2nd October", a: "on"}
+    ];
+    let currentQ = 1; let score = 0;
+    let stdData = { name: '', room: '', id: '' };
+
+    function startGame() {
+        stdData.name = document.getElementById('name').value.trim();
+        stdData.room = document.getElementById('room').value.trim();
+        stdData.id = document.getElementById('stdId').value.trim();
+        
+        if(!stdData.name || !stdData.room || stdData.id.length !== 5) {
+            Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกข้อมูลให้ครบ และรหัสนักเรียนต้องมี 5 หลักครับ', 'warning'); return;
+        }
+        
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('game').style.display = 'block';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        document.getElementById('progress').innerText = `ข้อ ${currentQ} / 13`;
+        document.getElementById('q-text').innerText = questions[currentQ].q;
+    }
+
+    function checkAnswer(ans) {
+        if(ans === questions[currentQ].a) score++;
+        currentQ++;
+        
+        if(currentQ > 13) {
+            endGame();
+        } else {
+            loadQuestion();
+        }
+    }
+
+    async function endGame() {
+        document.getElementById('game').style.display = 'none';
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('score-text').innerText = `${score} / 13`;
+        
+        let payload = {
+            name: stdData.name,
+            room: stdData.room,
+            studentId: "'" + stdData.id,
+            lesson: "Prepositions of Time (Single)",
+            score: score,
+            maxScore: 13
+        };
+
+        try {
+            await fetch(QUIZ_CONFIG.SCRIPT_URL, { 
+                method: 'POST', 
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(payload) 
+            });
+            let stat = document.getElementById('save-status');
+            stat.innerText = "✅ บันทึกคะแนนลงระบบเรียบร้อย!";
+            stat.style.color = "#10b981";
+        } catch(e) {
+            let stat = document.getElementById('save-status');
+            stat.innerText = "❌ ส่งคะแนนไม่สำเร็จ กรุณาแจ้งคุณครูครับ";
+            stat.style.color = "#ef4444";
+        }
+    }
+</script>
+</body>
+</html>
