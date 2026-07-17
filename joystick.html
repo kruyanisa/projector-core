@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joystick</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun'; background: #0f172a; color: white; text-align: center; padding: 20px; }
+        input, select { width: 100%; padding: 15px; margin: 10px 0; font-size: 18px; border-radius: 8px; box-sizing: border-box; text-align: center;}
+        .btn { width: 100%; padding: 15px; font-size: 20px; font-weight: bold; background: #3b82f6; color: white; border: none; border-radius: 12px; cursor: pointer; }
+        .rule { background: #ffe3e3; color: #d32f2f; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold; margin-bottom: 15px; }
+        .ans-btn { width: 100%; padding: 30px; font-size: 30px; font-weight: bold; margin: 10px 0; border: none; border-radius: 16px; color: white; cursor: pointer; }
+        .ans-btn:disabled { opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+<div id="login">
+    <div class="rule">⚠️ กติกา: ห้ามคนเดิมถือมือถือติดกัน 2 ข้อ! หมดข้อแล้วต้องวนมือถือให้เพื่อนร่วมกลุ่มกดด้วย!</div>
+    <h2>เข้าสู่ห้องเรียน</h2>
+    <input type="text" id="pin" placeholder="ใส่รหัสห้อง 4 หลักจากกระดาน" maxlength="4">
+    <input type="text" id="name" placeholder="ชื่อตัวแทน หรือ ชื่อกลุ่ม">
+    <select id="team">
+        <option value="A">เลือก Team A</option>
+        <option value="B">เลือก Team B</option>
+        <option value="C">เลือก Team C</option>
+        <option value="D">เลือก Team D</option>
+    </select>
+    <button class="btn" onclick="joinRoom()">เข้าเกม</button>
+    <div id="msg" style="color:#ef4444; margin-top:10px;"></div>
+</div>
+
+<div id="game" style="display: none;">
+    <h3 id="t-name"></h3>
+    <div id="status" style="color: #f59e0b; margin-bottom: 15px; font-weight:bold;">รอครูเริ่มเกม...</div>
+    <button class="ans-btn" style="background:#06b6d4;" onclick="lock('in')" disabled>IN</button>
+    <button class="ans-btn" style="background:#ec4899;" onclick="lock('on')" disabled>ON</button>
+    <button class="ans-btn" style="background:#f97316;" onclick="lock('at')" disabled>AT</button>
+</div>
+
+<script>
+    const SCRIPT_URL = "ใส่ลิงก์_GAS_ตรงนี้";
+    let myPIN = "", myTeam = ""; let lastQ = 0;
+
+    async function joinRoom() {
+        myPIN = document.getElementById('pin').value;
+        let name = document.getElementById('name').value;
+        myTeam = document.getElementById('team').value;
+        
+        let res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({action: 'team_join_room', pin: myPIN, team: myTeam, name: name}) });
+        let data = await res.json();
+        
+        if(data.success) {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            document.getElementById('t-name').innerText = `🎮 คุณคือ Team ${myTeam}`;
+            setInterval(sync, 1500);
+        } else {
+            document.getElementById('msg').innerText = data.msg;
+        }
+    }
+
+    async function sync() {
+        let res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({action: 'team_get_status', pin: myPIN}) });
+        let data = await res.json();
+        if(data.success) {
+            let state = data.state;
+            
+            // โดนเตะออก
+            if(state.teams[myTeam] === null) { location.reload(); return; }
+
+            if(state.status === 'PLAYING' && state.currentQ !== lastQ) {
+                lastQ = state.currentQ;
+                document.getElementById('status').innerText = `🔥 ข้อ ${lastQ} ปรึกษากันแล้วกดเลย!`;
+                document.querySelectorAll('.ans-btn').forEach(b => b.disabled = false);
+            }
+        }
+    }
+
+    async function lock(ans) {
+        document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
+        document.getElementById('status').innerText = `🔒 ล็อกคำตอบ ${ans.toUpperCase()} แล้ว! (เตรียมส่งมือถือให้เพื่อน)`;
+        await fetch(SCRIPT_URL, { method:'POST', mode: 'no-cors', body: JSON.stringify({action: 'team_lock_answer', pin: myPIN, team: myTeam, answer: ans}) });
+    }
+</script>
+</body>
+</html>
