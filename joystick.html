@@ -3,120 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Joystick</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <title>Teacher Projector</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { font-family: 'Sarabun'; background: #0f172a; color: white; text-align: center; padding: 20px; }
-        input, select { width: 100%; padding: 15px; margin: 10px 0; font-size: 18px; border-radius: 8px; box-sizing: border-box; text-align: center;}
-        .btn { width: 100%; padding: 15px; font-size: 20px; font-weight: bold; background: #3b82f6; color: white; border: none; border-radius: 12px; cursor: pointer; }
-        .rule { background: #ffe3e3; color: #d32f2f; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold; margin-bottom: 15px; }
-        .ans-btn { width: 100%; padding: 30px; font-size: 30px; font-weight: bold; margin: 10px 0; border: none; border-radius: 16px; color: white; cursor: pointer; }
-        .ans-btn:disabled { opacity: 0.5; }
+        .box { background: #1e293b; padding: 30px; border-radius: 16px; border: 2px solid #334155; max-width: 800px; margin: auto; }
+        .btn { padding: 15px 25px; font-size: 18px; font-weight: bold; background: #10b981; color: white; border: none; border-radius: 10px; cursor: pointer; margin: 10px; }
+        .btn-kick { background: #ef4444; font-size: 14px; padding: 5px 10px; margin-left: 10px; border: none; border-radius: 5px; color: white; cursor: pointer; }
+        .pin-text { font-size: 80px; color: #fbbf24; font-weight: 800; letter-spacing: 5px; margin: 10px 0; }
+        .team-grid { display: grid; grid-template-columns: repeat(var(--cols, 2), 1fr); gap: 15px; margin-top: 20px; }
+        .t-card { padding: 20px; border-radius: 12px; font-size: 22px; font-weight: bold; background: #334155; }
+        .timer { font-size: 60px; color: #ef4444; font-weight: bold; }
+        .q-text { font-size: 50px; margin: 30px 0; color: #38bdf8; }
+        select { padding: 10px; font-size: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
     </style>
     <script src="https://kruyanisa.github.io/classroom-core/quiz-config.js"></script>
 </head>
 <body>
 
-<div id="login">
-    <div class="rule">⚠️ กติกา: ห้ามคนเดิมถือมือถือติดกัน 2 ข้อ! วนส่งให้เพื่อนในกลุ่มด้วยนะครับ</div>
-    <h2>เข้าสู่ห้องเรียน</h2>
-    <input type="text" id="pin" placeholder="ใส่รหัสห้อง 4 หลักจากกระดาน" maxlength="4" oninput="checkRoomValid()">
-    <input type="text" id="name" placeholder="ชื่อตัวแทนกลุ่ม / ชื่อทีม">
-    <select id="team">
-        <option value="">-- กรุณากรอกรหัสห้องก่อนเลือกทีม --</option>
+<div id="setup" class="box">
+    <h1 style="color: #8b5cf6;">🖥️ Projector (ครู)</h1>
+    <p style="color: #94a3b8;">เลือกจำนวนทีมที่ต้องการแบ่ง:</p>
+    <select id="team-count-select">
+        <option value="2">2 ทีม (A - B)</option>
+        <option value="3">3 ทีม (A - C)</option>
+        <option value="4" selected>4 ทีม (A - D)</option>
     </select>
-    <button class="btn" style="margin-top:15px;" onclick="joinRoom()">เข้าเกม</button>
+    <br>
+    <button class="btn" onclick="createRoom()">🚀 สร้างรหัสห้องเรียน</button>
 </div>
 
-<div id="game" style="display: none;">
-    <h3 id="t-name"></h3>
-    <div id="status" style="color: #f59e0b; margin-bottom: 15px; font-weight:bold;">รอคุณครูเริ่มเกมบนจอใหญ่...</div>
-    <button class="ans-btn" style="background:#06b6d4;" onclick="lock('in')" disabled>IN</button>
-    <button class="ans-btn" style="background:#ec4899;" onclick="lock('on')" disabled>ON</button>
-    <button class="ans-btn" style="background:#f97316;" onclick="lock('at')" disabled>AT</button>
+<div id="lobby" class="box" style="display: none;">
+    <h2>ให้นักเรียนใส่รหัสห้องนี้เพื่อเข้าเกม</h2>
+    <div class="pin-text" id="pin-display">----</div>
+    <div class="team-grid" id="lobby-teams"></div>
+    <button class="btn" style="background:#3b82f6; margin-top:30px;" onclick="startGame()">▶ เริ่มเกม (ล็อกห้อง)</button>
+</div>
+
+<div id="game" class="box" style="display: none;">
+    <h2 id="q-num" style="color: #94a3b8;"></h2>
+    <div class="q-text" id="q-text"></div>
+    <div class="timer" id="timer">15</div>
+    <div class="team-grid" id="game-teams"></div>
+    <button class="btn" id="next-btn" style="display:none; margin-top:20px;" onclick="nextQ()">ข้อถัดไป ▶</button>
 </div>
 
 <script>
-    let myPIN = "", myTeam = ""; let lastQ = 0; let verifiedCount = 0;
+    const questions = [
+        {}, {q: "___ Friday afternoon", a: "on"}, {q: "___ the summer", a: "in"}, {q: "___ the morning", a: "in"}, {q: "___ Tuesday", a: "on"}, {q: "___ the afternoon", a: "in"}, {q: "___ midnight", a: "at"}, {q: "___ 3 o'clock", a: "at"}, {q: "___ night", a: "at"}, {q: "___ midday", a: "at"}, {q: "___ the evening", a: "in"}, {q: "___ November", a: "in"}, {q: "___ noon", a: "at"}, {q: "___ 2nd October", a: "on"}
+    ];
+    let roomPIN = ""; let currentQ = 1; let gameState = null; let timer = 15; let tId = null; let polling = null;
 
-    async function checkRoomValid() {
-        let pinVal = document.getElementById('pin').value;
-        if(pinVal.length === 4 && verifiedCount !== pinVal) {
-            let res = await fetch(QUIZ_CONFIG.SCRIPT_URL, { 
-                method:'POST', 
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({action: 'team_get_status', pin: pinVal}) 
-            });
-            let data = await res.json();
-            if(data.success) {
-                verifiedCount = pinVal;
-                let select = document.getElementById('team');
-                select.innerHTML = '';
-                let count = data.state.teamCount || 4;
-                for(let i=0; i<count; i++) {
-                    let char = String.fromCharCode(65 + i); // A, B, C, D
-                    let opt = document.createElement('option');
-                    opt.value = char; opt.innerText = `เข้ากลุ่ม Team ${char}`;
-                    select.appendChild(opt);
-                }
-            }
-        }
+    async function api(payload) {
+        let res = await fetch(QUIZ_CONFIG.SCRIPT_URL, { method: 'POST', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+        return await res.json();
     }
 
-    async function joinRoom() {
-        myPIN = document.getElementById('pin').value;
-        let name = document.getElementById('name').value.trim();
-        myTeam = document.getElementById('team').value;
-        
-        if(!name || !myTeam || myPIN.length !== 4) { Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกรหัสห้อง ชื่อ และเลือกทีมครับ', 'warning'); return; }
-        
-        Swal.fire({ title: 'กำลังเข้าสู่ห้องเรียน...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
-        
-        let res = await fetch(QUIZ_CONFIG.SCRIPT_URL, { 
-            method:'POST', 
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({action: 'team_join_room', pin: myPIN, team: myTeam, name: name}) 
-        });
-        let data = await res.json();
+    function showWait(msg) { Swal.fire({ title: msg, allowOutsideClick: false, didOpen: () => { Swal.showLoading() } }); }
+
+    async function createRoom() {
+        showWait('กำลังสร้างห้อง...');
+        let tc = document.getElementById('team-count-select').value;
+        let res = await api({ action: 'team_create_room', teamCount: tc });
         Swal.close();
-        
-        if(data.success) {
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('game').style.display = 'block';
-            document.getElementById('t-name').innerText = `🎮 กลุ่มของคุณคือ: Team ${myTeam}`;
-            setInterval(sync, 1500);
-        } else {
-            Swal.fire('ล้มเหลว', data.msg, 'error');
-        }
+        roomPIN = res.pin; gameState = res.state;
+        document.getElementById('setup').style.display = 'none'; document.getElementById('lobby').style.display = 'block'; document.getElementById('pin-display').innerText = roomPIN;
+        document.documentElement.style.setProperty('--cols', gameState.teamCount == 3 ? '3' : '2');
+        polling = setInterval(sync, 1500);
     }
 
     async function sync() {
-        let res = await fetch(QUIZ_CONFIG.SCRIPT_URL, { 
-            method:'POST', 
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({action: 'team_get_status', pin: myPIN}) 
-        });
-        let data = await res.json();
-        if(data.success) {
-            let state = data.state;
-            if(state.teams[myTeam] === null) { location.reload(); return; }
-            if(state.status === 'PLAYING' && state.currentQ !== lastQ) {
-                lastQ = state.currentQ;
-                document.getElementById('status').innerText = `🔥 ข้อที่ ${lastQ} ปรึกษากันแล้วส่งคำตอบเลย!`;
-                document.querySelectorAll('.ans-btn').forEach(b => b.disabled = false);
-            }
+        let res = await api({ action: 'team_get_status', pin: roomPIN });
+        if(res.success) {
+            gameState = res.state;
+            if(gameState.status === 'LOBBY') renderLobby();
+            if(gameState.status === 'PLAYING') renderGameTeams();
         }
     }
 
-    async function lock(ans) {
-        document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
-        document.getElementById('status').innerText = `🔒 ล็อกคำตอบ ${ans.toUpperCase()} แล้ว! (ส่งมือถือให้เพื่อนข้อถัดไป)`;
-        await fetch(QUIZ_CONFIG.SCRIPT_URL, { 
-            method:'POST', 
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({action: 'team_lock_answer', pin: myPIN, team: myTeam, answer: ans}) 
+    function renderLobby() {
+        let html = ''; let targetTeams = ['A','B','C','D'].slice(0, gameState.teamCount);
+        targetTeams.forEach(t => {
+            let name = gameState.teams[t];
+            if(name) html += `<div class="t-card" style="background:#10b981;">Team ${t}: ${name} <button class="btn btn-kick" onclick="kick('${t}')">เตะ</button></div>`;
+            else html += `<div class="t-card" style="background:#475569; opacity:0.6;">Team ${t}: (ว่าง)</div>`;
         });
+        document.getElementById('lobby-teams').innerHTML = html;
+    }
+
+    async function kick(team) { 
+        showWait('กำลังลบทีม...');
+        await api({ action: 'team_update_system', pin: roomPIN, kickTeam: team }); 
+        Swal.close();
+    }
+
+    async function startGame() {
+        showWait('กำลังเริ่มเกม...');
+        await api({ action: 'team_update_system', pin: roomPIN, setStatus: 'PLAYING', currentQ: 1 });
+        Swal.close();
+        document.getElementById('lobby').style.display = 'none'; document.getElementById('game').style.display = 'block'; runQuestion();
+    }
+
+    function runQuestion() {
+        document.getElementById('next-btn').style.display = 'none'; document.getElementById('q-num').innerText = `ข้อที่ ${currentQ} / 13`; document.getElementById('q-text').innerText = questions[currentQ].q;
+        timer = 15; document.getElementById('timer').innerText = timer;
+        tId = setInterval(() => {
+            timer--; document.getElementById('timer').innerText = timer;
+            if(timer <= 0) { clearInterval(tId); checkAnswers(); }
+        }, 1000);
+    }
+
+    function renderGameTeams() {
+        if(timer <= 0) return; let html = ''; let targetTeams = ['A','B','C','D'].slice(0, gameState.teamCount);
+        targetTeams.forEach(t => {
+            let ans = gameState.answers[t]; let status = ans ? '🔒 ล็อกคำตอบแล้ว' : '⏳ กำลังคิด...'; let color = ans ? '#3b82f6' : '#334155';
+            html += `<div class="t-card" style="background:${color};">Team ${t} (${gameState.scores[t]} แต้ม)<br><span style="font-size:14px;font-weight:normal;">${status}</span></div>`;
+        });
+        document.getElementById('game-teams').innerHTML = html;
+    }
+
+    async function checkAnswers() {
+        await sync();
+        let correct = questions[currentQ].a; document.getElementById('q-text').innerHTML = `<span style="color:#10b981;">${questions[currentQ].q.replace('___', `[ ${correct} ]`)}</span>`;
+        let addScores = {A:0, B:0, C:0, D:0}; let targetTeams = ['A','B','C','D'].slice(0, gameState.teamCount);
+        targetTeams.forEach(t => { if(gameState.answers[t] === correct) addScores[t] = 1; });
+        await api({ action: 'team_update_system', pin: roomPIN, addScores: addScores });
+        
+        let html = '';
+        targetTeams.forEach(t => {
+            let bg = gameState.answers[t] === correct ? '#10b981' : '#ef4444';
+            html += `<div class="t-card" style="background:${bg};">Team ${t} (${gameState.scores[t] + addScores[t]} แต้ม)<br><span style="font-size:16px;">ตอบ: ${gameState.answers[t] || 'ไม่ตอบ'}</span></div>`;
+        });
+        document.getElementById('game-teams').innerHTML = html; document.getElementById('next-btn').style.display = 'inline-block';
+    }
+
+    async function nextQ() {
+        currentQ++;
+        if(currentQ > 13) {
+            document.getElementById('q-text').innerText = "🎉 จบเกม!"; document.getElementById('next-btn').style.display = 'none';
+        } else {
+            showWait('กำลังเปลี่ยนข้อ...');
+            await api({ action: 'team_update_system', pin: roomPIN, currentQ: currentQ, clearAnswers: true });
+            Swal.close();
+            runQuestion();
+        }
     }
 </script>
 </body>
