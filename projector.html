@@ -55,7 +55,7 @@
     let timer = 15; let tId = null; let polling = null;
 
     async function api(payload) {
-        let res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        let res = await fetch(QUIZ_CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
         return await res.json();
     }
 
