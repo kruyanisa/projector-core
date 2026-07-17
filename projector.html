@@ -55,7 +55,11 @@
     let timer = 15; let tId = null; let polling = null;
 
     async function api(payload) {
-        let res = await fetch(QUIZ_CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        let res = await fetch(QUIZ_CONFIG.SCRIPT_URL, { 
+            method: 'POST', 
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload) 
+        });
         return await res.json();
     }
 
@@ -130,7 +134,6 @@
         let addScores = {A:0, B:0, C:0, D:0};
         ['A','B','C','D'].forEach(t => { if(gameState.answers[t] === correct) addScores[t] = 1; });
         await api({ action: 'team_update_system', pin: roomPIN, addScores: addScores });
-        
         let html = '';
         ['A','B','C','D'].forEach(t => {
             if(!gameState.teams[t]) return;
