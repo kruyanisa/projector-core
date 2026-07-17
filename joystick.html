@@ -13,11 +13,12 @@
         .ans-btn { width: 100%; padding: 30px; font-size: 30px; font-weight: bold; margin: 10px 0; border: none; border-radius: 16px; color: white; cursor: pointer; }
         .ans-btn:disabled { opacity: 0.5; }
     </style>
+    <script src="https://kruyanisa.github.io/classroom-core/quiz-config.js"></script>
 </head>
 <body>
 
 <div id="login">
-    <div class="rule">⚠️ กติกา: ห้ามคนเดิมถือมือถือติดกัน 2 ข้อ! หมดข้อแล้วต้องวนมือถือให้เพื่อนร่วมกลุ่มกดด้วย!</div>
+    <div class="rule">⚠️ กติกา: ห้ามคนเดิมถือมือถือติดกัน 2 ข้อ! วนมือถือให้เพื่อนด้วย!</div>
     <h2>เข้าสู่ห้องเรียน</h2>
     <input type="text" id="pin" placeholder="ใส่รหัสห้อง 4 หลักจากกระดาน" maxlength="4">
     <input type="text" id="name" placeholder="ชื่อตัวแทน หรือ ชื่อกลุ่ม">
@@ -40,7 +41,6 @@
 </div>
 
 <script>
-    <script src="https://kruyanisa.github.io/classroom-core/quiz-config.js"></script>
     let myPIN = "", myTeam = ""; let lastQ = 0;
 
     async function joinRoom() {
@@ -66,10 +66,7 @@
         let data = await res.json();
         if(data.success) {
             let state = data.state;
-            
-            // โดนเตะออก
             if(state.teams[myTeam] === null) { location.reload(); return; }
-
             if(state.status === 'PLAYING' && state.currentQ !== lastQ) {
                 lastQ = state.currentQ;
                 document.getElementById('status').innerText = `🔥 ข้อ ${lastQ} ปรึกษากันแล้วกดเลย!`;
