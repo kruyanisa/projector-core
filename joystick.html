@@ -78,7 +78,7 @@
     async function lock(ans) {
         document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
         document.getElementById('status').innerText = `🔒 ล็อกคำตอบ ${ans.toUpperCase()} แล้ว! (เตรียมส่งมือถือให้เพื่อน)`;
-        await fetch(SCRIPT_URL, { method:'POST', mode: 'no-cors', body: JSON.stringify({action: 'team_lock_answer', pin: myPIN, team: myTeam, answer: ans}) });
+        await fetch(QUIZ_CONFIG.SCRIPT_URL, { method:'POST', mode: 'no-cors', body: JSON.stringify({action: 'team_lock_answer', pin: myPIN, team: myTeam, answer: ans}) });
     }
 </script>
 </body>
