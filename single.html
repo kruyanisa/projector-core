@@ -6,59 +6,196 @@
     <title>Single Player - Prepositions of Time</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://kruyanisa.github.io/classroom-core/quiz-config.js"></script>
     <style>
-        body { font-family: 'Sarabun'; background: #0f172a; color: white; display: flex; justify-content: center; margin: 0; padding: 20px 0; }
-        .container { width: 100%; max-width: 400px; padding: 0 20px; box-sizing: border-box; text-align: center; }
-        .box { background: #1e293b; padding: 30px; border-radius: 16px; border: 2px solid #334155; margin-bottom: 20px; }
-        input { width: 100%; padding: 15px; margin: 10px 0; font-size: 16px; border-radius: 8px; box-sizing: border-box; text-align: center; }
-        .btn { width: 100%; padding: 15px; font-size: 18px; font-weight: bold; background: #10b981; color: white; border: none; border-radius: 12px; cursor: pointer; }
-        .ans-btn { width: 100%; padding: 25px; font-size: 24px; font-weight: bold; margin: 10px 0; border: none; border-radius: 12px; color: white; cursor: pointer; }
-        .q-text { font-size: 30px; margin: 20px 0; color: #38bdf8; font-weight: bold; }
+        body { 
+            font-family: 'Sarabun'; 
+            /* พื้นหลังพาสเทลแบบ Gradient ไล่สีสวยงาม */
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); 
+            min-height: 100vh;
+            margin: 0; padding: 20px 0; 
+            display: flex; justify-content: center; align-items: center;
+        }
+        .container { width: 100%; max-width: 450px; padding: 0 20px; box-sizing: border-box; text-align: center; }
+        
+        /* กล่องสไตล์ Glassmorphism (กระจกขุ่น) */
+        .box { 
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 30px; 
+            border-radius: 24px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15), inset 0 2px 0 rgba(255,255,255,1); 
+            margin-bottom: 20px; 
+        }
+        
+        .profile-bar {
+            background: #e0e7ff; color: #4338ca; padding: 10px 15px; border-radius: 12px;
+            font-size: 14px; font-weight: bold; margin-bottom: 20px; display: flex;
+            justify-content: space-between; align-items: center; border: 2px solid #c7d2fe;
+        }
+        .btn-switch { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: 'Sarabun'; }
+
+        input { width: 100%; padding: 15px; margin: 10px 0; font-size: 16px; border-radius: 12px; border: 2px solid #e2e8f0; box-sizing: border-box; text-align: center; font-family: 'Sarabun'; outline: none; transition: 0.2s; }
+        input:focus { border-color: #a855f7; }
+
+        /* ปุ่มแนว 3D กดแล้วยุบตัว */
+        .btn-3d { 
+            width: 100%; padding: 15px; font-size: 20px; font-weight: bold; font-family: 'Sarabun';
+            border: none; border-radius: 16px; color: white; cursor: pointer; margin-top: 15px;
+            transition: all 0.1s; box-sizing: border-box;
+        }
+        .btn-start { background: linear-gradient(to bottom, #a855f7, #9333ea); box-shadow: 0 6px 0 #7e22ce, 0 10px 20px rgba(0,0,0,0.2); }
+        .btn-start:active { transform: translateY(6px); box-shadow: 0 0 0 #7e22ce; }
+        
+        .ans-btn { 
+            width: 100%; padding: 25px; font-size: 26px; font-weight: 800; font-family: 'Sarabun';
+            margin: 10px 0; border: none; border-radius: 16px; color: white; cursor: pointer;
+            transition: all 0.1s;
+        }
+        .ans-btn:active:not(:disabled) { transform: translateY(6px); box-shadow: none !important; }
+        .btn-in { background: #06b6d4; box-shadow: 0 6px 0 #0891b2; }
+        .btn-on { background: #ec4899; box-shadow: 0 6px 0 #be185d; }
+        .btn-at { background: #f97316; box-shadow: 0 6px 0 #ea580c; }
+        .ans-btn:disabled { opacity: 0.8; cursor: not-allowed; transform: translateY(6px); box-shadow: none !important; }
+
+        .q-text { font-size: 32px; margin: 20px 0; color: #4c1d95; font-weight: 800; }
+        .music-btn { position: fixed; top: 15px; right: 15px; background: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; z-index: 100; }
     </style>
 </head>
 <body>
 
+<audio id="bgm" loop>
+    <source src="BG.mp3" type="audio/mpeg">
+</audio>
+<button class="music-btn" id="musicToggle" onclick="toggleMusic()">🎵</button>
+
 <div class="container">
     <div id="login" class="box">
-        <h2 style="color: #ec4899;">👤 เล่นเดี่ยว</h2>
-        <p style="color: #94a3b8; font-size: 14px;">Prepositions of Time (13 ข้อ)</p>
-        <input type="text" id="name" placeholder="ชื่อ - นามสกุล">
-        <input type="text" id="room" placeholder="ชั้น/ห้อง (เช่น 1/1)">
-        <input type="text" id="stdId" placeholder="รหัสนักเรียน (5 หลัก)" maxlength="5">
-        <button class="btn" style="margin-top:15px;" onclick="startGame()">เริ่มทำแบบทดสอบ</button>
+        <h2 style="color: #9333ea; font-size: 28px; margin-top: 0;">👤 โหมดลุยเดี่ยว</h2>
+        <p style="color: #64748b; font-size: 15px; font-weight: bold;">Prepositions of Time (13 ข้อ)</p>
+        
+        <div id="profile-section" class="profile-bar" style="display: none;">
+            <div>👤 <span id="display-name"></span><br>🏫 <span id="display-room"></span> | 🆔 <span id="display-id"></span></div>
+            <button class="btn-switch" onclick="switchAccount()">สลับบัญชี</button>
+        </div>
+
+        <div id="input-section">
+            <input type="text" id="name" placeholder="ชื่อ - นามสกุล">
+            <input type="text" id="room" placeholder="ชั้น/ห้อง (เช่น 1/1)" onblur="formatRoom()">
+            <input type="text" id="stdId" placeholder="รหัสนักเรียน (5 หลัก)" maxlength="5" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+        </div>
+        
+        <button class="btn-3d btn-start" onclick="startGame()">🚀 เริ่มทำแบบทดสอบ</button>
     </div>
 
     <div id="game" class="box" style="display: none;">
-        <div style="color: #94a3b8; font-weight: bold;" id="progress">ข้อ 1 / 13</div>
+        <div style="color: #a855f7; font-weight: 800; font-size: 18px; background: #f3e8ff; padding: 5px 15px; border-radius: 20px; display: inline-block;" id="progress">ข้อ 1 / 13</div>
         <div class="q-text" id="q-text"></div>
-        <button class="ans-btn" style="background:#06b6d4;" onclick="checkAnswer('in')">IN</button>
-        <button class="ans-btn" style="background:#ec4899;" onclick="checkAnswer('on')">ON</button>
-        <button class="ans-btn" style="background:#f97316;" onclick="checkAnswer('at')">AT</button>
+        <button id="btn-in" class="ans-btn btn-in" onclick="checkAnswer('in', this)">IN</button>
+        <button id="btn-on" class="ans-btn btn-on" onclick="checkAnswer('on', this)">ON</button>
+        <button id="btn-at" class="ans-btn btn-at" onclick="checkAnswer('at', this)">AT</button>
     </div>
 
     <div id="result" class="box" style="display: none;">
-        <h2>🎉 ทำสำเร็จ!</h2>
-        <p>คะแนนของคุณคือ</p>
-        <div style="font-size: 50px; color: #10b981; font-weight: 800; margin: 10px 0;" id="score-text">0 / 13</div>
-        <div id="save-status" style="color: #f59e0b; margin-top: 15px; font-weight: bold;">⏳ กำลังบันทึกคะแนน...</div>
+        <h2 style="color: #ec4899; font-size: 30px; margin-top: 0;" id="result-title">🎉 ทำสำเร็จ!</h2>
+        <p style="color: #64748b; font-weight: bold; font-size: 16px;">คะแนนของคุณคือ</p>
+        <div style="font-size: 60px; color: #10b981; font-weight: 900; margin: 10px 0; text-shadow: 2px 2px 0px #d1fae5;" id="score-text">0 / 13</div>
+        <div id="save-status" style="color: #8b5cf6; margin-top: 15px; font-weight: bold; font-size: 16px;">⏳ กำลังบันทึกคะแนน...</div>
+        
+        <button id="btn-play-again" class="btn-3d btn-start" style="display: none; background: linear-gradient(to bottom, #10b981, #059669); box-shadow: 0 6px 0 #047857;" onclick="resetGame()">🔄 Play Again</button>
     </div>
 </div>
 
 <script>
+    // --- ระบบเสียงสังเคราะห์ (ไม่ต้องใช้ไฟล์ MP3) ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+    function playBeep(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(); const gainNode = audioCtx.createGain();
+        osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+        if(type === 'click') { osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+        else if(type === 'correct') { osc.type = 'triangle'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1); gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.2); }
+        else if(type === 'wrong') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.2); gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
+    }
+    function speakPraise() {
+        let msg = new SpeechSynthesisUtterance("Excellent! Perfect score!");
+        msg.lang = 'en-US'; msg.rate = 1; window.speechSynthesis.speak(msg);
+    }
+    
+    // --- ระบบเพลงพื้นหลัง ---
+    let bgm = document.getElementById("bgm");
+    let isMusicPlaying = false;
+    function toggleMusic() {
+        if(isMusicPlaying) { bgm.pause(); document.getElementById("musicToggle").innerText = "🔇"; }
+        else { bgm.play().catch(e=>{}); document.getElementById("musicToggle").innerText = "🎵"; }
+        isMusicPlaying = !isMusicPlaying;
+    }
+
+    // --- โครงสร้างเกม ---
     const questions = [
-        {}, {q: "___ Friday afternoon", a: "on"}, {q: "___ the summer", a: "in"}, {q: "___ the morning", a: "in"}, {q: "___ Tuesday", a: "on"}, {q: "___ the afternoon", a: "in"}, {q: "___ midnight", a: "at"}, {q: "___ 3 o'clock", a: "at"}, {q: "___ night", a: "at"}, {q: "___ midday", a: "at"}, {q: "___ the evening", a: "in"}, {q: "___ November", a: "in"}, {q: "___ noon", a: "at"}, {q: "___ 2nd October", a: "on"}
+        {q: "___ Friday afternoon", a: "on"}, {q: "___ the summer", a: "in"}, {q: "___ the morning", a: "in"}, {q: "___ Tuesday", a: "on"}, 
+        {q: "___ the afternoon", a: "in"}, {q: "___ midnight", a: "at"}, {q: "___ 3 o'clock", a: "at"}, {q: "___ night", a: "at"}, 
+        {q: "___ midday", a: "at"}, {q: "___ the evening", a: "in"}, {q: "___ November", a: "in"}, {q: "___ noon", a: "at"}, {q: "___ 2nd October", a: "on"}
     ];
-    let currentQ = 1; let score = 0;
+    let currentQ = 0; let score = 0;
     let stdData = { name: '', room: '', id: '' };
 
+    window.onload = () => { checkLogin(); };
+
+    // --- ระบบบัญชีและจัดรูปแบบห้อง ---
+    function formatRoom() {
+        let el = document.getElementById('room');
+        let nums = el.value.trim().match(/\d+/g);
+        if (nums && nums.length >= 2) el.value = `ม.${nums[0]}/${nums[1]}`;
+        else if (nums && nums.length === 1) el.value = `ม.${nums[0]}`;
+    }
+
+    function checkLogin() {
+        let savedId = localStorage.getItem('s_id');
+        if(savedId) {
+            stdData = { name: localStorage.getItem('s_name'), room: localStorage.getItem('s_room'), id: savedId };
+            document.getElementById('input-section').style.display = 'none';
+            document.getElementById('profile-section').style.display = 'flex';
+            document.getElementById('display-name').innerText = stdData.name;
+            document.getElementById('display-room').innerText = stdData.room;
+            document.getElementById('display-id').innerText = stdData.id;
+        }
+    }
+
+    function switchAccount() {
+        playBeep('click');
+        Swal.fire({
+            title: 'สลับบัญชี?',
+            text: "ข้อมูลนักเรียนคนเดิมจะถูกล้างออก ต้องการดำเนินการต่อไหม?",
+            icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'ยืนยัน', cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                localStorage.removeItem('s_name'); localStorage.removeItem('s_room'); localStorage.removeItem('s_id');
+                document.getElementById('input-section').style.display = 'block';
+                document.getElementById('profile-section').style.display = 'none';
+                document.getElementById('name').value = ''; document.getElementById('room').value = ''; document.getElementById('stdId').value = '';
+                stdData = { name: '', room: '', id: '' };
+            }
+        });
+    }
+
     function startGame() {
-        stdData.name = document.getElementById('name').value.trim();
-        stdData.room = document.getElementById('room').value.trim();
-        stdData.id = document.getElementById('stdId').value.trim();
-        
-        if(!stdData.name || !stdData.room || stdData.id.length !== 5) {
-            Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกข้อมูลให้ครบ และรหัสนักเรียนต้องมี 5 หลักครับ', 'warning'); return;
+        playBeep('click');
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        if(!isMusicPlaying) toggleMusic(); // เล่นเพลงตอนเริ่ม
+
+        if(document.getElementById('input-section').style.display !== 'none') {
+            stdData.name = document.getElementById('name').value.trim();
+            stdData.room = document.getElementById('room').value.trim();
+            stdData.id = document.getElementById('stdId').value.trim();
+            
+            if(!stdData.name || !stdData.room || stdData.id.length !== 5) {
+                Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกข้อมูลให้ครบ และรหัสนักเรียนต้องมี 5 หลักครับ', 'warning'); return;
+            }
+            // บันทึกบัญชี
+            localStorage.setItem('s_name', stdData.name); localStorage.setItem('s_room', stdData.room); localStorage.setItem('s_id', stdData.id);
+            checkLogin();
         }
         
         document.getElementById('login').style.display = 'none';
@@ -66,50 +203,84 @@
         loadQuestion();
     }
 
+    // --- ระบบเล่นเกม ---
     function loadQuestion() {
-        document.getElementById('progress').innerText = `ข้อ ${currentQ} / 13`;
-        document.getElementById('q-text').innerText = questions[currentQ].q;
+        // รีเซ็ตปุ่ม
+        let btns = document.querySelectorAll('.ans-btn');
+        btns.forEach(b => { 
+            b.disabled = false; 
+            if(b.id === 'btn-in') b.style.background = '#06b6d4';
+            if(b.id === 'btn-on') b.style.background = '#ec4899';
+            if(b.id === 'btn-at') b.style.background = '#f97316';
+        });
+
+        document.getElementById('progress').innerText = `ข้อ ${currentQ + 1} / 13`;
+        document.getElementById('q-text').innerHTML = questions[currentQ].q.replace('___', '<span style="color:#d8b4fe;">___</span>');
     }
 
-    function checkAnswer(ans) {
-        if(ans === questions[currentQ].a) score++;
-        currentQ++;
+    function checkAnswer(ans, btnEl) {
+        // ล็อกปุ่มทั้งหมดทันที
+        document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
         
-        if(currentQ > 13) {
-            endGame();
+        let correctAns = questions[currentQ].a;
+        if(ans === correctAns) {
+            score++;
+            playBeep('correct');
+            btnEl.style.background = '#10b981'; // เปลี่ยนปุ่มที่กดเป็นสีเขียว
         } else {
-            loadQuestion();
+            playBeep('wrong');
+            btnEl.style.background = '#ef4444'; // เปลี่ยนปุ่มที่กดเป็นสีแดง
+            document.getElementById(`btn-${correctAns}`).style.background = '#10b981'; // เฉลยข้อที่ถูกให้เป็นสีเขียว
         }
+
+        // เติมคำในช่องว่างโชว์ให้ดู
+        document.getElementById('q-text').innerHTML = questions[currentQ].q.replace('___', `<span style="color:${ans===correctAns?'#10b981':'#ef4444'}; text-decoration: underline;">${correctAns.toUpperCase()}</span>`);
+
+        // หน่วงเวลา 1.5 วิ แล้วไปข้อต่อไป
+        setTimeout(() => {
+            currentQ++;
+            if(currentQ >= questions.length) endGame();
+            else loadQuestion();
+        }, 1500);
     }
 
+    // --- ระบบส่งคะแนน ---
     async function endGame() {
         document.getElementById('game').style.display = 'none';
         document.getElementById('result').style.display = 'block';
         document.getElementById('score-text').innerText = `${score} / 13`;
         
-        let payload = {
-            name: stdData.name,
-            room: stdData.room,
-            studentId: "'" + stdData.id,
-            lesson: "Prepositions of Time (Single)",
-            score: score,
-            maxScore: 13
-        };
+        if(score === 13) {
+            document.getElementById('result-title').innerText = "🏆 Perfect!";
+            speakPraise();
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        } else {
+            document.getElementById('result-title').innerText = "🎉 ยอดเยี่ยม!";
+        }
+
+        let payload = { name: stdData.name, room: stdData.room, studentId: "'" + stdData.id, lesson: "ม.1 Unit 4 Prepositions of Time (Single)", score: score, maxScore: 13 };
 
         try {
-            await fetch(QUIZ_CONFIG.SCRIPT_URL, { 
-                method: 'POST', 
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload) 
-            });
+            await fetch(QUIZ_CONFIG.SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
             let stat = document.getElementById('save-status');
-            stat.innerText = "✅ บันทึกคะแนนลงระบบเรียบร้อย!";
-            stat.style.color = "#10b981";
+            stat.innerText = "✅ บันทึกคะแนนลงระบบเรียบร้อย!"; stat.style.color = "#10b981";
         } catch(e) {
             let stat = document.getElementById('save-status');
-            stat.innerText = "❌ ส่งคะแนนไม่สำเร็จ กรุณาแจ้งคุณครูครับ";
-            stat.style.color = "#ef4444";
+            stat.innerText = "❌ ส่งคะแนนไม่สำเร็จ กรุณาแจ้งคุณครูครับ"; stat.style.color = "#ef4444";
         }
+        
+        // โชว์ปุ่ม Play again
+        document.getElementById('btn-play-again').style.display = 'block';
+    }
+
+    function resetGame() {
+        playBeep('click');
+        currentQ = 0; score = 0;
+        document.getElementById('result').style.display = 'none';
+        document.getElementById('btn-play-again').style.display = 'none';
+        document.getElementById('save-status').innerText = "⏳ กำลังบันทึกคะแนน...";
+        document.getElementById('save-status').style.color = "#8b5cf6";
+        document.getElementById('login').style.display = 'block';
     }
 </script>
 </body>
