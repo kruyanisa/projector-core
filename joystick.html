@@ -7,38 +7,43 @@
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        body { font-family: 'Sarabun'; background: #0f172a; color: white; display: flex; justify-content: center; margin: 0; padding: 20px 0; }
-        /* คุมความกว้างไม่ให้ล้นบนจอคอม/แท็บเล็ต */
+        body { font-family: 'Sarabun'; background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); display: flex; justify-content: center; margin: 0; padding: 20px 0; min-height: 100vh;}
         .container { width: 100%; max-width: 400px; padding: 0 20px; box-sizing: border-box; text-align: center; }
-        
-        input, select { width: 100%; padding: 15px; margin: 10px 0; font-size: 18px; border-radius: 8px; box-sizing: border-box; text-align: center;}
-        .btn { width: 100%; padding: 15px; font-size: 20px; font-weight: bold; background: #3b82f6; color: white; border: none; border-radius: 12px; cursor: pointer; }
-        .rule { background: #ffe3e3; color: #d32f2f; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold; margin-bottom: 15px; line-height: 1.4; }
-        .ans-btn { width: 100%; padding: 30px; font-size: 30px; font-weight: bold; margin: 10px 0; border: none; border-radius: 16px; color: white; cursor: pointer; }
-        .ans-btn:disabled { opacity: 0.5; }
+        .box { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        input, select { width: 100%; padding: 15px; margin: 10px 0; font-size: 18px; border-radius: 12px; box-sizing: border-box; text-align: center; border: 2px solid #cbd5e1; outline: none; font-family: 'Sarabun'; color: #1e3a8a; font-weight: bold;}
+        input:focus { border-color: #38bdf8; }
+        .btn { width: 100%; padding: 15px; font-size: 20px; font-weight: bold; background: linear-gradient(to bottom, #38bdf8, #0ea5e9); color: white; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 5px 0 #0284c7; font-family: 'Sarabun'; transition: 0.1s;}
+        .btn:active { transform: translateY(5px); box-shadow: none; }
+        .rule { background: #ffe4e6; color: #e11d48; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: bold; margin-bottom: 20px; line-height: 1.5; border: 2px solid #fda4af; }
+        .ans-btn { width: 100%; padding: 25px; font-size: 30px; font-weight: 900; margin: 10px 0; border: none; border-radius: 16px; color: white; cursor: pointer; font-family: 'Sarabun'; transition: 0.1s; }
+        .ans-btn:active:not(:disabled) { transform: translateY(6px); box-shadow: none !important; }
+        .btn-in { background: #38bdf8; box-shadow: 0 6px 0 #0284c7; }
+        .btn-on { background: #fb7185; box-shadow: 0 6px 0 #e11d48; }
+        .btn-at { background: #fbbf24; box-shadow: 0 6px 0 #d97706; }
+        .ans-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: translateY(6px); box-shadow: none !important; }
     </style>
     <script src="https://kruyanisa.github.io/classroom-core/quiz-config.js"></script>
 </head>
 <body>
 
 <div class="container">
-    <div id="login">
-        <div class="rule">⚠️ กติกา: ห้ามคนเดิมถือมือถือติดกัน 2 ข้อ!<br>วนส่งให้เพื่อนในกลุ่มด้วยนะครับ</div>
-        <h2 style="color: #10b981;">📱 จอยสติ๊ก (นักเรียน)</h2>
-        <input type="text" id="pin" placeholder="ใส่รหัสห้อง 4 หลักจากกระดาน" maxlength="4" oninput="checkRoomValid()">
+    <div id="login" class="box">
+        <div class="rule">⚠️ กติกา: ห้ามคนเดิมถือมือถือติดกัน 2 ข้อ!<br>ปรึกษาแล้ววนส่งให้เพื่อนกดด้วยนะครับ</div>
+        <h2 style="color: #0ea5e9; font-size: 26px; margin-top: 0;">📱 จอยสติ๊ก</h2>
+        <input type="text" id="pin" placeholder="ใส่รหัสห้อง 4 หลัก" maxlength="4" oninput="checkRoomValid()">
         <input type="text" id="name" placeholder="ชื่อตัวแทนกลุ่ม / ชื่อทีม">
         <select id="team">
-            <option value="">-- กรุณากรอกรหัสห้องก่อนเลือกทีม --</option>
+            <option value="">-- รอใส่รหัสห้อง --</option>
         </select>
         <button class="btn" style="margin-top:15px;" onclick="joinRoom()">เข้าเกม</button>
     </div>
 
-    <div id="game" style="display: none;">
-        <h3 id="t-name"></h3>
-        <div id="status" style="color: #f59e0b; margin-bottom: 15px; font-weight:bold;">รอคุณครูเริ่มเกมบนจอใหญ่...</div>
-        <button class="ans-btn" style="background:#06b6d4;" onclick="lock('in')" disabled>IN</button>
-        <button class="ans-btn" style="background:#ec4899;" onclick="lock('on')" disabled>ON</button>
-        <button class="ans-btn" style="background:#f97316;" onclick="lock('at')" disabled>AT</button>
+    <div id="game" class="box" style="display: none;">
+        <h3 id="t-name" style="color: #0ea5e9; font-size: 24px; margin-top: 0;"></h3>
+        <div id="status" style="color: #f59e0b; margin-bottom: 20px; font-weight:bold; font-size: 18px; background: #fef3c7; padding: 10px; border-radius: 12px;">รอคุณครูเริ่มเกมบนจอใหญ่...</div>
+        <button class="ans-btn btn-in" onclick="lock('in')" disabled>IN</button>
+        <button class="ans-btn btn-on" onclick="lock('on')" disabled>ON</button>
+        <button class="ans-btn btn-at" onclick="lock('at')" disabled>AT</button>
     </div>
 </div>
 
@@ -57,13 +62,17 @@
                     let char = String.fromCharCode(65 + i);
                     let opt = document.createElement('option'); opt.value = char; opt.innerText = `เข้ากลุ่ม Team ${char}`; select.appendChild(opt);
                 }
+            } else {
+                verifiedCount = ""; // รีเซ็ตให้พิมพ์ใหม่ได้
+                document.getElementById('pin').value = '';
+                Swal.fire({ title: 'รหัสไม่ถูกต้อง!', text: 'ไม่พบห้องเรียนนี้ครับ กรุณาดูรหัสบนจอคุณครูอีกครั้งนะ', icon: 'error', confirmButtonColor: '#0ea5e9' });
             }
         }
     }
 
     async function joinRoom() {
         myPIN = document.getElementById('pin').value; let name = document.getElementById('name').value.trim(); myTeam = document.getElementById('team').value;
-        if(!name || !myTeam || myPIN.length !== 4) { Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกรหัสห้อง ชื่อ และเลือกทีมครับ', 'warning'); return; }
+        if(!name || !myTeam || myPIN.length !== 4) { Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกรหัส ชื่อ และเลือกทีมให้ครบครับ', 'warning'); return; }
         
         Swal.fire({ title: 'กำลังเข้าสู่ห้องเรียน...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
         let res = await fetch(QUIZ_CONFIG.SCRIPT_URL, { method:'POST', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({action: 'team_join_room', pin: myPIN, team: myTeam, name: name}) });
@@ -72,8 +81,8 @@
         
         if(data.success) {
             document.getElementById('login').style.display = 'none'; document.getElementById('game').style.display = 'block';
-            document.getElementById('t-name').innerText = `🎮 กลุ่มของคุณคือ: Team ${myTeam}`; setInterval(sync, 1500);
-        } else Swal.fire('ล้มเหลว', data.msg, 'error');
+            document.getElementById('t-name').innerText = `🎮 กลุ่มของคุณคือ Team ${myTeam}`; setInterval(sync, 1500);
+        } else Swal.fire('เข้าไม่ได้', data.msg, 'error');
     }
 
     async function sync() {
@@ -82,7 +91,9 @@
         if(data.success) {
             let state = data.state; if(state.teams[myTeam] === null) { location.reload(); return; }
             if(state.status === 'PLAYING' && state.currentQ !== lastQ) {
-                lastQ = state.currentQ; document.getElementById('status').innerText = `🔥 ข้อที่ ${lastQ} ปรึกษากันแล้วส่งคำตอบเลย!`;
+                lastQ = state.currentQ; 
+                document.getElementById('status').innerText = `🔥 ข้อที่ ${lastQ} ปรึกษากันแล้วกดเลย!`;
+                document.getElementById('status').style.color = "#ea580c"; document.getElementById('status').style.background = "#ffedd5";
                 document.querySelectorAll('.ans-btn').forEach(b => b.disabled = false);
             }
         }
@@ -90,7 +101,8 @@
 
     async function lock(ans) {
         document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
-        document.getElementById('status').innerText = `🔒 ล็อกคำตอบ ${ans.toUpperCase()} แล้ว! (ส่งให้เพื่อนข้อถัดไป)`;
+        document.getElementById('status').innerText = `🔒 ส่ง ${ans.toUpperCase()} แล้ว! (รอคุณครูเฉลย)`;
+        document.getElementById('status').style.color = "#059669"; document.getElementById('status').style.background = "#d1fae5";
         await fetch(QUIZ_CONFIG.SCRIPT_URL, { method:'POST', headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({action: 'team_lock_answer', pin: myPIN, team: myTeam, answer: ans}) });
     }
 </script>
